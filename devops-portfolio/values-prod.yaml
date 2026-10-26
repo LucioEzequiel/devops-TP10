@@ -1,0 +1,6 @@
+backend:
+  replicas: 2
+ingress:
+  host: devops-portfolio.dev
+config:
+  appVersion: "1.0.0"

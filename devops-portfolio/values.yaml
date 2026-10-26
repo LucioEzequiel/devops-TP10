@@ -1,0 +1,50 @@
+postgres:
+  image: postgres:16-alpine
+  user: postgres
+  database: notesdb
+  password: CAMBIAR_POR_UNA_CLAVE
+  storage:
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+backend:
+  image: notes-backend
+  tag: v1.0.0
+  replicas: 2
+  port: 5000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+frontend:
+  image: notes-frontend
+  tag: v1.0.0
+  replicas: 2
+  port: 80
+  nodePort: null
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+config:
+  appVersion: "1.0.0"
+  port: "5000"
+
+ingress:
+  enabled: true
+  className: traefik
+  host: devops-portfolio.dev
