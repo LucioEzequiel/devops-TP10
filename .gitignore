@@ -1,0 +1,5 @@
+.env
+*.pyc
+__pycache__/
+*.secret.yaml
+values-*.local.yaml
