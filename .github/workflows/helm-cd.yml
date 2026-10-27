@@ -49,6 +49,7 @@ jobs:
         run: ./scripts/render-validate.sh
 
       - name: Desplegar en production-helm
+        id: deploy
         run: |
           helm upgrade --install notes devops-portfolio \
             -n production-helm \
@@ -62,3 +63,10 @@ jobs:
           cat /tmp/health-prod.json; echo
           test "$code" = "200"
           grep -q '"db":"connected"' /tmp/health-prod.json
+
+      - name: Rollback automático si falla el smoke test
+        if: failure() && steps.deploy.outcome == 'success'
+        run: |
+          echo "Smoke test fallido: revirtiendo production-helm a la revisión anterior"
+          helm rollback notes 0 -n production-helm --wait
+          helm history notes -n production-helm
