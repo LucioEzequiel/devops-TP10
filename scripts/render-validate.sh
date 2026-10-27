@@ -19,7 +19,7 @@ print(f'    OK: {len(docs)} objetos')
 "
 
 echo "==> yamllint"
-/root/venv-tp07/bin/yamllint -d '{extends: default, rules: {line-length: {max: 120}}}' "$RENDER"
+yamllint -d '{extends: default, rules: {line-length: {max: 120}}}' "$RENDER"
 echo "    OK"
 
 if command -v kubectl >/dev/null && kubectl cluster-info >/dev/null 2>&1; then
