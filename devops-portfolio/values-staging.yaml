@@ -1,0 +1,4 @@
+ingress:
+  host: staging.devops-portfolio.local
+config:
+  appVersion: "1.0.0-staging"
