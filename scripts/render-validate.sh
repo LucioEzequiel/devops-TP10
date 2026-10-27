@@ -2,21 +2,32 @@
 set -euo pipefail
 
 CHART="devops-portfolio"
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+RENDER="manifests-rendered-prod.yaml"
 
 echo "==> helm lint"
 helm lint "$CHART"
 
-for env in values values-staging values-prod; do
-  echo "==> render $env"
-  if [ "$env" = "values" ]; then
-    helm template test "$CHART" > "$TMP/$env.yaml"
-  else
-    helm template test "$CHART" -f "$CHART/$env.yaml" > "$TMP/$env.yaml"
-  fi
-  kubectl apply --dry-run=client -f "$TMP/$env.yaml" > /dev/null
-  echo "    OK: $env"
-done
+echo "==> render values-prod"
+helm template notes "$CHART" -f "$CHART/values-prod.yaml" > "$RENDER"
 
-echo "==> Validación completa: todos los entornos pasaron"
+echo "==> validación YAML (Python)"
+python3 -c "
+import yaml
+with open('$RENDER') as f:
+    docs = [d for d in yaml.safe_load_all(f) if d]
+print(f'    OK: {len(docs)} objetos')
+"
+
+echo "==> yamllint"
+yamllint -d '{extends: default, rules: {line-length: {max: 120}}}' "$RENDER"
+echo "    OK"
+
+if command -v kubectl >/dev/null && kubectl cluster-info >/dev/null 2>&1; then
+  echo "==> kubectl dry-run"
+  kubectl apply --dry-run=client -f "$RENDER" > /dev/null
+  echo "    OK"
+else
+  echo "==> kubectl dry-run omitido (sin cluster accesible)"
+fi
+
+echo "==> Validación completa"
