@@ -5,7 +5,7 @@ metadata:
   labels:
     app: notes-backend
 spec:
-{{- if not .Values.backend.autoscaling.enabled }}
+{{- if not (and .Values.backend.autoscaling .Values.backend.autoscaling.enabled) }}
   replicas: {{ .Values.backend.replicas }}
 {{- end }}
   strategy:
