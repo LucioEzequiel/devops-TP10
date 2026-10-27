@@ -6,3 +6,4 @@ values-*.local.yaml
 manifests-rendered-*.yaml
 backend/coverage.xml
 .pytest_cache/
+.coverage
