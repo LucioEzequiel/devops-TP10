@@ -1,0 +1,64 @@
+name: helm-cd
+
+on:
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-staging:
+    runs-on: [self-hosted, helm-cd]
+    environment: staging
+    env:
+      KUBECONFIG: /home/gha-runner/.kube/staging-helm.yaml
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validar chart
+        run: ./scripts/render-validate.sh
+
+      - name: Desplegar en staging-helm
+        run: |
+          helm upgrade --install notes devops-portfolio \
+            -n staging-helm \
+            -f devops-portfolio/values-staging.yaml \
+            --reuse-values \
+            --atomic --wait --timeout 5m
+
+      - name: Smoke test
+        run: |
+          code=$(curl -s -o /tmp/health-staging.json -w "%{http_code}" -H "Host: staging.devops-portfolio.local" http://172.22.0.2/health)
+          cat /tmp/health-staging.json; echo
+          test "$code" = "200"
+          grep -q '"db":"connected"' /tmp/health-staging.json
+
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    needs: deploy-staging
+    runs-on: [self-hosted, helm-cd]
+    environment: production
+    env:
+      KUBECONFIG: /home/gha-runner/.kube/production-helm.yaml
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validar chart
+        run: ./scripts/render-validate.sh
+
+      - name: Desplegar en production-helm
+        run: |
+          helm upgrade --install notes devops-portfolio \
+            -n production-helm \
+            -f devops-portfolio/values-prod.yaml \
+            --reuse-values \
+            --atomic --wait --timeout 5m
+
+      - name: Smoke test
+        run: |
+          code=$(curl -s -o /tmp/health-prod.json -w "%{http_code}" -H "Host: devops-portfolio.dev" http://172.22.0.2/health)
+          cat /tmp/health-prod.json; echo
+          test "$code" = "200"
+          grep -q '"db":"connected"' /tmp/health-prod.json
