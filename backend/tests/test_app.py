@@ -1,11 +1,14 @@
-import pytest
 import json
-import sys, os
+import os
+import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-# Mock de psycopg2 para no necesitar Postgres en los tests unitarios
-from unittest.mock import patch, MagicMock
 
+# Mock de psycopg2 para no necesitar Postgres en los tests unitarios
 @pytest.fixture
 def client():
     with patch('app.get_conn') as mock_conn:
@@ -20,6 +23,7 @@ def client():
         with flask_app.app.test_client() as client:
             yield client
 
+
 def test_health(client):
     with patch('app.get_conn') as mock_conn:
         mock_conn.return_value  # simula conexión exitosa
@@ -28,11 +32,13 @@ def test_health(client):
         data = json.loads(r.data)
         assert 'status' in data
 
+
 def test_get_notes(client):
     r = client.get('/api/notes')
     assert r.status_code == 200
     data = json.loads(r.data)
     assert isinstance(data, list)
+
 
 def test_create_note(client):
     r = client.post(
@@ -42,6 +48,7 @@ def test_create_note(client):
     )
     assert r.status_code == 201
 
+
 def test_create_note_sin_titulo(client):
     r = client.post(
         '/api/notes',
@@ -50,6 +57,7 @@ def test_create_note_sin_titulo(client):
     )
     # Debe fallar con 400 o 500 si no hay título
     assert r.status_code in [400, 500]
+
 
 def test_delete_note(client):
     r = client.delete('/api/notes/1')
