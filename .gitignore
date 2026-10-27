@@ -3,3 +3,6 @@
 __pycache__/
 *.secret.yaml
 values-*.local.yaml
+manifests-rendered-*.yaml
+backend/coverage.xml
+.pytest_cache/
